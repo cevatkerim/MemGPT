@@ -29,8 +29,7 @@ from .constants import (
     CORE_MEMORY_PERSONA_CHAR_LIMIT,
 )
 from .errors import LLMError
-from jira import JIRA
-from jira.exceptions import JIRAError
+from atlassian import Jira
 
 
 def initialize_memory(ai_notes, human_notes):
@@ -269,6 +268,12 @@ class Agent(object):
             "http_request": self.http_request,
             "get_jira": self.get_jira,
             "query_jira": self.run_jql,
+            "find_jira_user_id": self.find_jira_user_id,
+            "edit_jira_issue": self.edit_jira_issue,
+            "update_jira_issue": self.edit_jira_issue,
+            "get_issue_link_types": self.get_issue_link_types,
+            "get_jira_link_types": self.get_issue_link_types,
+
         }
 
     @property
@@ -908,6 +913,7 @@ class Agent(object):
     def get_jira(self, issue_key):
         """
         Makes a request to user's JIRA instance with the jira issue id that is provided and returns the issue details
+        along with linked Confluence page links.
 
         Args:
         issue_key (str): the issue key (MAIN-1 for example).
@@ -916,23 +922,19 @@ class Agent(object):
         dict: The response from the JIRA request.
         """
         if self.jira is None:
-            server = os.getenv("JIRA_SERVER")
+            jira_url = os.getenv("JIRA_SERVER")
             username = os.getenv('JIRA_USER')
             password = os.getenv('JIRA_KEY')
-            self.jira = JIRA({'server': server}, basic_auth=(username, password))
+            self.jira = Jira(url=jira_url, username=username, password=password)
         try:
             issue = self.jira.issue(issue_key)
-            return {"issue": {
-                "key": issue.key,
-                "summary": issue.fields.summary,
-                "description": issue.fields.description,
-                "created": issue.fields.created,
-                "assignee": issue.fields.creator.displayName,
-                "status": issue.fields.status.name,
-                "status_category": issue.fields.status.statusCategory.name}}
-        except JIRAError as e:
-            print(f'Error: {e.text}')
-            return {"error": str(e.text)}
+            urls = [item['object']['url'] for item in self.jira.get_issue_remotelinks(issue_key) if item['application']['name'] in ['Confluence', 'System Confluence']]
+            return { "issue_fields": issue["fields"],
+                     "relevant_links": urls}
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
     def run_jql(self, jql):
         """
         Makes a request to user's JIRA instance with the jql that is provided and returns the issues
@@ -944,16 +946,64 @@ class Agent(object):
         dict: The response from the JIRA request.
         """
         if self.jira is None:
-            server = os.getenv("JIRA_SERVER")
+            jira_url = os.getenv("JIRA_SERVER")
             username = os.getenv('JIRA_USER')
             password = os.getenv('JIRA_KEY')
-            self.jira = JIRA({'server': server}, basic_auth=(username, password))
+            self.jira = Jira(url=jira_url, username=username, password=password)
         try:
-            issues = self.jira.search_issues(jql)
-            return {"issues": [issue.key for issue in issues]}
-        except JIRAError as e:
-            print(f'Error: {e.text}')
-            return {"error": str(e.text)}
+            issues = self.jira.jql(jql, fields='summary,status')['issues']
+            return {"issues": [{"key": issue["key"], "summary": issue["fields"]["summary"],
+                                "status": issue["fields"]["status"]["name"]} for issue in issues]}
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def find_jira_user_id(self, email_or_fullname):
+        if self.jira is None:
+            jira_url = os.getenv("JIRA_SERVER")
+            username = os.getenv('JIRA_USER')
+            password = os.getenv('JIRA_KEY')
+            self.jira = Jira(url=jira_url, username=username, password=password)
+        try:
+            # Fuzzy search using emailAddress or displayName
+            return self.jira.user_find_by_user_string(email_or_fullname, start=0, limit=50, include_inactive_users=False)
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+    def get_issue_link_types(self):
+        if self.jira is None:
+            jira_url = os.getenv("JIRA_SERVER")
+            username = os.getenv('JIRA_USER')
+            password = os.getenv('JIRA_KEY')
+            self.jira = Jira(url=jira_url, username=username, password=password)
+        try:
+            # Fuzzy search using emailAddress or displayName
+            return self.jira.get_issue_link_types()
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def edit_jira_issue(self, issue_key, fields):
+        """
+        Edits an issue from a JSON representation
+        The issue can either be updated by setting explicit the field
+        value(s) or by using an operation to change the field value
+
+        :param issue_key: str
+        :param fields: JSON
+        :return:
+        """
+        if self.jira is None:
+            jira_url = os.getenv("JIRA_SERVER")
+            username = os.getenv('JIRA_USER')
+            password = os.getenv('JIRA_KEY')
+            self.jira = Jira(url=jira_url, username=username, password=password)
+        try:
+            # Fuzzy search using emailAddress or displayName
+            return self.jira.update_issue_field(issue_key, fields)
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
 
     def pause_heartbeats(self, minutes, max_pause=MAX_PAUSE_HEARTBEATS):
         """Pause timed heartbeats for N minutes"""

@@ -345,4 +345,58 @@ FUNCTIONS_CHAINING = {
             "required": ["jql", "request_heartbeat"],
         },
     },
+    "find_jira_user_id": {
+        "name": "find_jira_user_id",
+        "description": "Fuzzy search using emailAddress or displayName to find the user's Jira account id.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "email_or_fullname": {
+                    "type": "string",
+                    "description": "Either user's full name or the email address John Doe or john.doe@blah.com",
+                },
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["email_or_fullname", "request_heartbeat"],
+        },
+    },
+    "get_issue_link_types": {
+        "name": "get_issue_link_types",
+        "description": "Get issue link types that are defined in Jira. This will allow you to understand how issues might be related to one another",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["request_heartbeat"],
+        },
+    },
+    "edit_jira_issue": {
+        "name": "edit_jira_issue",
+        "description": "Edits an issue from a JSON representation The issue can either be updated by setting explicit the field value(s) or by using an operation to change the field value. For example {'summary': 'New summary'}",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "issue_key": {
+                    "type": "string",
+                    "description": "Either the issue key (MAIN-1 for example)",
+                },
+                "fields": {
+                    "type": "object",
+                    "description": "List of issue screen fields to update, specifying the sub-field to update and its value for each field. This field provides a straightforward option when setting a sub-field. ",
+                },
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["issue_key", "fields", "request_heartbeat"],
+        },
+    },
 }
