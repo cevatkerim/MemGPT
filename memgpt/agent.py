@@ -8,6 +8,7 @@ import os
 import requests
 import json
 import threading
+import traceback
 
 import openai
 from memgpt.persistence_manager import LocalStateManager
@@ -486,8 +487,8 @@ class Agent(object):
             return False
 
         function_name = response_message["function_call"]["name"]
-        if require_send_message and function_name != "send_message":
-            printd(f"First message function call wasn't send_message: {response_message}")
+        if require_send_message and function_name != "send_message" and function_name != "archival_memory_search":
+            printd(f"First message function call wasn't send_message or archival_memory_search: {response_message}")
             return False
 
         if require_monologue and (
@@ -579,7 +580,8 @@ class Agent(object):
                 function_failed = False
             except Exception as e:
                 error_msg = f"Error calling function {function_name} with args {function_args}: {str(e)}"
-                printd(error_msg)
+                error_msg_user = f"{error_msg}\n{traceback.format_exc()}"
+                printd(error_msg_user)
                 function_response = package_function_response(False, error_msg)
                 messages.append(
                     {
@@ -780,8 +782,11 @@ class Agent(object):
         return None
 
     def edit_memory_append(self, name, content):
+        print("edit append")
         new_len = self.memory.edit_append(name, content)
+        print("rebuild memory")
         self.rebuild_memory()
+        print("done")
         return None
 
     def edit_memory_replace(self, name, old_content, new_content):
@@ -1099,7 +1104,8 @@ class AgentAsync(Agent):
                 function_failed = False
             except Exception as e:
                 error_msg = f"Error calling function {function_name} with args {function_args}: {str(e)}"
-                printd(error_msg)
+                error_msg_user = f"{error_msg}\n{traceback.format_exc()}"
+                printd(error_msg_user)
                 function_response = package_function_response(False, error_msg)
                 messages.append(
                     {
@@ -1113,7 +1119,10 @@ class AgentAsync(Agent):
 
             # If no failures happened along the way: ...
             # Step 4: send the info on the function call and function response to GPT
-            await self.interface.function_message(f"Success: {function_response_string}")
+            if function_response_string:
+                await self.interface.function_message(f"Success: {function_response_string}")
+            else:
+                await self.interface.function_message(f"Success")
             messages.append(
                 {
                     "role": "function",
