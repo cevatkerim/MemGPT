@@ -274,6 +274,12 @@ class Agent(object):
             "update_jira_issue": self.edit_jira_issue,
             "get_issue_link_types": self.get_issue_link_types,
             "get_jira_link_types": self.get_issue_link_types,
+            "get_jira_boards": self.get_jira_boards,
+            "get_workflows": self.get_workflows,
+            "get_issue_worklog": self.get_issue_worklog,
+            "get_issue_createmeta_issuetypes": self.get_issue_createmeta_issuetypes,
+            "get_issue_editmeta": self.get_issue_editmeta,
+            "get_issue_transitions": self.get_issue_transitions,
 
         }
 
@@ -975,6 +981,7 @@ class Agent(object):
         except Exception as e:
             print(f'Error: {str(e)}')
             return {"error": str(e)}
+
     def get_issue_link_types(self):
         if self.jira is None:
             jira_url = os.getenv("JIRA_SERVER")
@@ -1006,6 +1013,80 @@ class Agent(object):
         try:
             # Fuzzy search using emailAddress or displayName
             return self.jira.update_issue_field(issue_key, fields)
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def get_jira_boards(self):
+        print("get_jira_boards is called")
+        if self.jira is None:
+            jira_url = os.getenv("JIRA_SERVER")
+            username = os.getenv('JIRA_USER')
+            password = os.getenv('JIRA_KEY')
+            self.jira = Jira(url=jira_url, username=username, password=password)
+        try:
+            # Fuzzy search using emailAddress or displayName
+            return self.jira.get_all_agile_boards()
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def get_workflows(self):
+        if self.jira is None:
+            jira_url = os.getenv("JIRA_SERVER")
+            username = os.getenv('JIRA_USER')
+            password = os.getenv('JIRA_KEY')
+            self.jira = Jira(url=jira_url, username=username, password=password)
+        try:
+            # Fuzzy search using emailAddress or displayName
+            return self.jira.get_workflows_paginated()
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def get_issue_worklog(self, issue_key):
+        """
+        Returns worklogs for an issue, starting from the oldest worklog or from the worklog started on or after a date and time.
+        Time tracking must be enabled in Jira, otherwise this operation returns an error.
+
+        Args:
+        issue_key (str): the issue key (MAIN-1 for example).
+
+        Returns:
+        dict: The response from the JIRA request.
+        """
+        if self.jira is None:
+            jira_url = os.getenv("JIRA_SERVER")
+            username = os.getenv('JIRA_USER')
+            password = os.getenv('JIRA_KEY')
+            self.jira = Jira(url=jira_url, username=username, password=password)
+        try:
+            return self.jira.issue_get_worklog(issue_key)
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def get_issue_createmeta_issuetypes(self, project):
+        print("get_issue_createmeta_issuetypes is called")
+        try:
+            return self.jira.get(self.jira.resource_url("issue/createmeta/{}/issueTypes".format(project), api_version=3))
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def get_issue_editmeta(self, issue_key):
+        try:
+            base_url = self.jira.resource_url("issue", api_version=3)
+            url = "{}/{}/editmeta".format(base_url, issue_key)
+            return self.jira.get(url)
+            # return self.jira.get(self.jira.resource_url("issue/createmeta/{}/issueTypes".format(project), api_version=3))
+        except Exception as e:
+            print(f'Error: {str(e)}')
+            return {"error": str(e)}
+
+    def get_issue_transitions(self, issue_key):
+        try:
+            return self.jira.get_issue_transitions(issue_key)
         except Exception as e:
             print(f'Error: {str(e)}')
             return {"error": str(e)}

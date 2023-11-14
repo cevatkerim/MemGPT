@@ -399,4 +399,104 @@ FUNCTIONS_CHAINING = {
             "required": ["issue_key", "fields", "request_heartbeat"],
         },
     },
+    "get_jira_boards": {
+        "name": "get_jira_boards",
+        "description": "Returns all boards. This only includes boards that the user has permission to view.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["request_heartbeat"],
+        },
+    },
+    "get_workflows": {
+        "name": "get_workflows",
+        "description": "Returns a paginated list (default 50) of published classic workflows. When workflow names are specified, details of those workflows are returned. Otherwise, all published classic workflows are returned.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["request_heartbeat"],
+        },
+    },
+    "get_issue_worklog": {
+        "name": "get_issue_worklog",
+        "description": "Returns worklogs for an issue, starting from the oldest worklog or from the worklog started on or after a date and time. Time tracking must be enabled in Jira, otherwise this operation returns an error. ",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "issue_key": {
+                    "type": "string",
+                    "description": "The ID or key of the issue. MAIN-123 for example.",
+                },
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["issue_key", "request_heartbeat"],
+        },
+    },
+    "get_issue_createmeta_issuetypes": {
+        "name": "get_issue_createmeta_issuetypes",
+        "description": "Returns a page of issue type metadata for a specified project. Use the information to populate the requests in Create issue.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "project_id": {
+                    "type": "string",
+                    "description": "The ID or key of the project. MAIN for example.",
+                },
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["project_id", "request_heartbeat"],
+        },
+    },
+    "get_issue_editmeta": {
+        "name": "get_issue_editmeta",
+        "description": "Returns the edit screen fields for an issue that are visible to and editable by the user. Use the information to populate the requests in Edit issue.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "issue_key": {
+                    "type": "string",
+                    "description": "The ID or key of the issue. MAIN-123 for example.",
+                },
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["issue_key", "request_heartbeat"],
+        },
+    },
+    "get_issue_transitions": {
+        "name": "get_issue_transitions",
+        "description": "Returns either all transitions or a transition that can be performed by the user on an issue, based on the issue's status. Note, if a request is made for a transition that does not exist or cannot be performed on the issue, given its status, the response will return any empty transitions list.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "issue_key": {
+                    "type": "string",
+                    "description": "The ID or key of the issue. MAIN-123 for example.",
+                },
+                "request_heartbeat": {
+                    "type": "boolean",
+                    "description": FUNCTION_PARAM_DESCRIPTION_REQ_HEARTBEAT,
+                },
+            },
+            "required": ["issue_key", "request_heartbeat"],
+        },
+    },
 }

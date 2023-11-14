@@ -97,7 +97,13 @@ def use_preset(preset_name, agent_config, model, persona, human, interface, pers
             "query_jira",
             "find_jira_user_id",
             "edit_jira_issue",
-            "get_issue_link_types"
+            "get_issue_link_types",
+            "get_jira_boards",
+            "get_workflows",
+            "get_issue_worklog",
+            "get_issue_createmeta_issuetypes",
+            "get_issue_editmeta",
+            "get_issue_transitions",
         ]
         available_functions = [v for k, v in gpt_functions.FUNCTIONS_CHAINING.items() if k in functions]
         printd(f"Available functions:\n", [x["name"] for x in available_functions])
